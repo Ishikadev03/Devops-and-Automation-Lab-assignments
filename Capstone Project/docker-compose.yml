@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tasks
+      POSTGRES_USER: tasks_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-local-dev-only-change-me}
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks_user -d tasks"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  app:
+    build: ./application
+    image: devopsflow-task-app:local
+    environment:
+      DB_HOST: db
+      DB_NAME: tasks
+      DB_USER: tasks_user
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-only-change-me}
+      APP_VERSION: local-compose
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+    depends_on: [app]
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-local-admin-change-me}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on: [prometheus]
+  loki:
+    image: grafana/loki:3.2.1
+    command: -config.file=/etc/loki/local-config.yaml
+    ports: ["3100:3100"]
+  
+  alloy:
+    image: grafana/alloy:latest
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./monitoring/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "12345:12345"
+    depends_on:
+      - loki
+
+volumes:
+  pgdata:
+  grafana-data:
+  alloy-data:

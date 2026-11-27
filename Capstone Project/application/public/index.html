@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevOpsFlow Task Board</title><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header><div><p class="eyebrow">DEVOPSFLOW / CAPSTONE</p><h1>Task Board</h1><p class="sub">A small app delivered through an automated DevOps lifecycle.</p></div><span id="health" class="pill">Checking service…</span></header>
+    <form id="task-form">
+      <input id="title" maxlength="160" placeholder="What needs to get done?" required>
+      <input id="description" placeholder="Short description (optional)">
+      <button>Add task</button>
+    </form>
+    <section><div class="section-head"><h2>Your tasks</h2><button id="refresh" class="secondary" type="button">Refresh</button></div><div id="tasks" class="tasks"></div></section>
+    <footer>DevOpsFlow · Node.js · PostgreSQL · Kubernetes</footer>
+  </main>
+  <script src="/app.js"></script>
+</body></html>

@@ -1,0 +1,32 @@
+name: Build and deploy to local Kubernetes
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build-and-deploy:
+    # Configure a GitHub self-hosted runner on the machine with Docker and Minikube.
+    runs-on: [self-hosted, linux, devopsflow-local]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build and publish
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/devopsflow-task-app
+        run: |
+          docker build -t "$IMAGE:${GITHUB_SHA}" ./application
+          docker push "$IMAGE:${GITHUB_SHA}"
+      - name: Deploy to local cluster
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/devopsflow-task-app
+        run: |
+          kubectl apply -f kubernetes/namespace.yaml
+          kubectl apply -f kubernetes/postgres.yaml
+          kubectl apply -f kubernetes/app-config.yaml
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE:${GITHUB_SHA}|g" kubernetes/app-deployment.yaml | kubectl apply -f -
+          kubectl apply -f kubernetes/service.yaml
+          kubectl rollout status deployment/task-app-stable -n devopsflow --timeout=180s

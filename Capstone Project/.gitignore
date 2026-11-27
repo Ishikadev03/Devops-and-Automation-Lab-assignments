@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+coverage/
+backups/*.sql
+.terraform/
+terraform/.terraform.lock.hcl
+.DS_Store
+*.tfstate
+*.tfstate.*

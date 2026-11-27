@@ -1,0 +1,27 @@
+---
+- name: Prepare and deploy DevOpsFlow to local Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Check kubectl availability
+      ansible.builtin.command: kubectl.exe version --client
+      changed_when: false
+
+    - name: Ensure Minikube cluster responds
+      ansible.builtin.command: kubectl.exe cluster-info
+      changed_when: false
+
+    - name: Apply namespace
+      ansible.builtin.command: kubectl.exe apply -f ../kubernetes/namespace.yaml
+      args:
+        chdir: "{{ playbook_dir }}"
+
+    - name: Apply database and app configuration
+      ansible.builtin.command: kubectl.exe apply -f {{ item }}
+      loop:
+        - ../kubernetes/app-config.yaml
+        - ../kubernetes/postgres.yaml
+      args:
+        chdir: "{{ playbook_dir }}"

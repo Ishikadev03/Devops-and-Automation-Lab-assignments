@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: task-db-secret
+  namespace: devopsflow
+type: Opaque
+stringData:
+  DB_PASSWORD: local-dev-only-change-me
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-app-config
+  namespace: devopsflow
+data:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: tasks
+  DB_USER: tasks_user
+  APP_VERSION: kubernetes
